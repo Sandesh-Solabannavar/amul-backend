@@ -17,17 +17,20 @@ export const fetchAndUpdateProducts = async (): Promise<void> => {
 
     for (const productData of products) {
       const existingProduct = await Product.findOne({ productId: productData._id });
-      
+      console.log(`📊 Checking product: ${productData.name}`);
       if (existingProduct) {
         const wasOutOfStock = existingProduct.inventoryQuantity === 0;
         const nowInStock = productData.inventory_quantity > 0;
-        
+
+        console.log(`🔍 Existing product found: ${existingProduct.name} - Inventory: ${productData.inventory_quantity}`);
+        console.log(`Previous status: ${wasOutOfStock ? 'Out of Stock' : 'In Stock'}, Current status: ${nowInStock ? 'In Stock' : 'Out of Stock'}`);
+
         if (wasOutOfStock && nowInStock) {
           console.log(`📦 Product ${productData.name} is back in stock!`);
           await notifySubscribers(existingProduct, productData);
           restockedCount++;
         }
-        
+
         await Product.findOneAndUpdate(
           { productId: productData._id },
           {
@@ -47,8 +50,8 @@ export const fetchAndUpdateProducts = async (): Promise<void> => {
           alias: productData.alias,
           price: productData.price,
           inventoryQuantity: productData.inventory_quantity,
-          image: productData.images && productData.images.length > 0 ? 
-                `https://shop.amul.com/s/62fa94df8c13af2e242eba16/${productData.images[0].image}` : undefined,
+          image: productData.images && productData.images.length > 0 ?
+            `https://shop.amul.com/s/62fa94df8c13af2e242eba16/${productData.images[0].image}` : undefined,
           brand: productData.brand,
           wasOutOfStock: productData.inventory_quantity === 0,
           isActive: true
@@ -58,7 +61,7 @@ export const fetchAndUpdateProducts = async (): Promise<void> => {
         console.log(`➕ Added new product: ${productData.name}`);
       }
     }
-    
+
     console.log(`✅ Products sync completed - Updated: ${updatedCount}, Added: ${addedCount}, Restocked: ${restockedCount}`);
   } catch (error) {
     console.error('❌ Error fetching products:', error instanceof Error ? error.message : 'Unknown error');
